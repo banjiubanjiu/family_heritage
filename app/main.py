@@ -36,7 +36,12 @@ def get_client() -> OpenAI:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="请先配置 OPENAI_API_KEY")
-    return OpenAI(api_key=api_key)
+
+    base_url = os.getenv("OPENAI_BASE_URL")
+    if not base_url and os.getenv("CHAT_MODEL", "qwen-max").startswith("qwen"):
+        base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+
+    return OpenAI(api_key=api_key, base_url=base_url)
 
 
 def db_conn() -> sqlite3.Connection:
@@ -78,7 +83,7 @@ def chunk_text(text: str, chunk_size: int = 360, overlap: int = 80) -> Iterable[
 
 def embedding_for(text: str, client: OpenAI) -> np.ndarray:
     response = client.embeddings.create(
-        model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-small"),
+        model=os.getenv("EMBEDDING_MODEL", "text-embedding-v3"),
         input=text,
     )
     return np.array(response.data[0].embedding, dtype=np.float32)
@@ -180,7 +185,7 @@ def chat_with_mentor(
     )
 
     completion = client.chat.completions.create(
-        model=os.getenv("CHAT_MODEL", "gpt-4o-mini"),
+        model=os.getenv("CHAT_MODEL", "qwen-max"),
         temperature=0.4,
         messages=[
             {"role": "system", "content": system_prompt},

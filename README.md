@@ -5,7 +5,7 @@
 - 自动切片 + 向量化存储（SQLite）
 - 用户可和指定人物进行检索增强对话（RAG）
 
-> 已真实接入 OpenAI 大模型（Embedding + Chat）。
+> 已接入 OpenAI 兼容接口（Embedding + Chat），默认使用 qwen-max。
 
 ## 1. 快速启动
 
@@ -15,6 +15,10 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 # 编辑 .env 填入 OPENAI_API_KEY
+# 如使用阿里云 DashScope（qwen）建议同时配置：
+# OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+# CHAT_MODEL=qwen-max
+# EMBEDDING_MODEL=text-embedding-v3
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -56,4 +60,3 @@ uvicorn app.main:app --reload --port 8000
 - 把“检索人物片段”封装为 tool
 - 让 agent 自动追问（当资料不足时）
 - 加入“生成人物年表/家风总结”的自动化任务
-
