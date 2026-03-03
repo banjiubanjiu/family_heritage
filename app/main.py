@@ -66,6 +66,15 @@ def init_db() -> None:
         )
 
 
+def validate_text_field(field_name: str, value: str, max_len: int = 200) -> str:
+    normalized = value.strip()
+    if not normalized:
+        raise HTTPException(status_code=400, detail=f"{field_name}不能为空")
+    if len(normalized) > max_len:
+        raise HTTPException(status_code=400, detail=f"{field_name}长度不能超过{max_len}字符")
+    return normalized
+
+
 def chunk_text(text: str, chunk_size: int = 360, overlap: int = 80) -> Iterable[str]:
     text = text.strip()
     if len(text) <= chunk_size:
@@ -145,13 +154,14 @@ def upload_memory(
 ) -> JSONResponse:
     client = get_client()
 
-    if not content.strip():
-        raise HTTPException(status_code=400, detail="内容不能为空")
+    person = validate_text_field("人物姓名", person, max_len=50)
+    title = validate_text_field("标题", title, max_len=120)
+    content = validate_text_field("内容", content, max_len=20000)
 
     rows = []
     for idx, chunk in enumerate(chunk_text(content)):
         emb = embedding_for(chunk, client)
-        rows.append((person.strip(), f"{title.strip()} #{idx + 1}", chunk, json.dumps(emb.tolist())))
+        rows.append((person, f"{title} #{idx + 1}", chunk, json.dumps(emb.tolist())))
 
     with db_conn() as conn:
         conn.executemany(
@@ -168,8 +178,8 @@ def chat_with_mentor(
     question: str = Form(...),
 ) -> JSONResponse:
     client = get_client()
-    person = person.strip()
-    question = question.strip()
+    person = validate_text_field("人物姓名", person, max_len=50)
+    question = validate_text_field("问题", question, max_len=1000)
 
     chunks = fetch_person_chunks(person)
     if not chunks:
