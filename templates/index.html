@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>家族传承 RAG Demo</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 960px; margin: 24px auto; padding: 0 16px; }
+    h1 { margin-bottom: 4px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; }
+    textarea, input { width: 100%; margin: 8px 0 12px; padding: 10px; box-sizing: border-box; }
+    button { padding: 10px 14px; border: none; background: #0d6efd; color: white; border-radius: 8px; cursor: pointer; }
+    .log { white-space: pre-wrap; background: #fafafa; border: 1px solid #eee; padding: 12px; border-radius: 8px; min-height: 90px; }
+    .refs { font-size: 13px; color: #555; }
+  </style>
+</head>
+<body>
+  <h1>家族传承 RAG Demo</h1>
+  <p>上传人物故事/金句/经验后，和这位“数字分身”对话。</p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>1) 上传资料</h2>
+      <input id="u-person" placeholder="人物姓名，如：王建国" />
+      <input id="u-title" placeholder="标题，如：创业十年复盘" />
+      <textarea id="u-content" rows="9" placeholder="粘贴故事、金句、经验等"></textarea>
+      <button onclick="upload()">上传并向量化</button>
+      <div id="u-log" class="log"></div>
+    </div>
+
+    <div class="card">
+      <h2>2) 开始对话</h2>
+      <input id="c-person" placeholder="人物姓名（需先上传）" />
+      <textarea id="c-question" rows="5" placeholder="想问这位前辈什么问题？"></textarea>
+      <button onclick="chat()">发送问题</button>
+      <div id="c-log" class="log"></div>
+      <div id="refs" class="refs"></div>
+    </div>
+  </div>
+
+<script>
+async function upload() {
+  const fd = new FormData();
+  fd.append('person', document.getElementById('u-person').value);
+  fd.append('title', document.getElementById('u-title').value);
+  fd.append('content', document.getElementById('u-content').value);
+
+  const r = await fetch('/api/upload', { method: 'POST', body: fd });
+  const data = await r.json();
+  document.getElementById('u-log').innerText = JSON.stringify(data, null, 2);
+}
+
+async function chat() {
+  const fd = new FormData();
+  fd.append('person', document.getElementById('c-person').value);
+  fd.append('question', document.getElementById('c-question').value);
+
+  const r = await fetch('/api/chat', { method: 'POST', body: fd });
+  const data = await r.json();
+  if (!r.ok) {
+    document.getElementById('c-log').innerText = data.detail || '请求失败';
+    return;
+  }
+
+  document.getElementById('c-log').innerText = data.answer;
+  document.getElementById('refs').innerText = '参考片段: ' + data.references.map(x => x.title).join(' | ');
+}
+</script>
+</body>
+</html>
