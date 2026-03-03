@@ -38,7 +38,34 @@ uvicorn app.main:app --reload --port 8000
 - `POST /api/chat`
   - form: `person`, `question`
 
-## 4. 下一步建议（你可以做的）
+## 4. 质量保障（测试 + Build）
+
+```bash
+pytest -q
+docker build -t family-heritage:local .
+```
+
+仓库包含 GitHub Actions CI（自动安装依赖、执行测试、构建 Docker 镜像）：
+- `.github/workflows/ci.yml`
+
+## 5. 云端部署建议（最快拿到可访问链接）
+
+### 方案 A：Railway（推荐）
+1. 将仓库推到 GitHub。
+2. 在 Railway 新建 Project -> Deploy from GitHub Repo。
+3. 环境变量至少配置：
+   - `OPENAI_API_KEY`
+   - `OPENAI_BASE_URL`（可选）
+   - `CHAT_MODEL`（可选）
+   - `EMBEDDING_MODEL`（可选）
+4. Railway 会自动构建 Dockerfile 并生成公网 URL。
+
+### 方案 B：Render
+1. New Web Service -> 连接 GitHub 仓库。
+2. 使用 Docker 部署（读取根目录 Dockerfile）。
+3. 配置同样的环境变量并完成部署。
+
+## 6. 下一步建议（你可以做的）
 
 为了让这个 demo 快速升级为可演示产品，你可以配合我做这些：
 
@@ -54,7 +81,7 @@ uvicorn app.main:app --reload --port 8000
    - SQLite -> pgvector / Milvus / Weaviate；
    - 增加缓存、埋点、对话历史、内容安全过滤。
 
-## 5. 用 Codex Agent SDK 的升级方向
+## 7. 用 Codex Agent SDK 的升级方向
 
 当前版本已可跑通真实 RAG。后续可引入 Agent SDK：
 - 把“检索人物片段”封装为 tool
